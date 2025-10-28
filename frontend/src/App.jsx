@@ -1,35 +1,157 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useState, useEffect } from "react";
+import Header from "./components/Header";
+import LeftSidebar from "./components/layout/LeftSidebar";
+import RightSidebar from "./components/layout/RightSidebar";
+import AIAssistantFab from "./components/common/AIAssistantFab";
 
-function App() {
-  const [count, setCount] = useState(0)
+// Import page components
+import HomeFeed from "./components/pages/HomeFeed";
+import MyNetwork from "./components/pages/MyNetwork";
+import Jobs from "./components/pages/Jobs";
+import Roadmaps from "./components/pages/Roadmaps";
+import Messaging from "./components/pages/Messaging";
+import Notifications from "./components/pages/Notifications";
+import Profile from "./components/pages/Profile";
+import Settings from "./components/pages/Settings";
+import ResumeBuilder from "./components/pages/ResumeBuilder";
+import SavedItems from "./components/pages/SavedItems";
+import CoursePage from "./components/pages/CoursePage";
+import JobApplicationPage from "./components/pages/JobApplicationPage";
+import RoadmapDetailPage from "./components/pages/RoadmapDetailPage";
+import Premium from "./components/pages/Premium";
+import { useModal } from "./components/contexts/ModalContext";
+
+const App = () => {
+  const [activePage, setActivePage] = useState("Home");
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+  const { openModal } = useModal();
+
+  // State for immersive page views
+  const [viewingCourse, setViewingCourse] = useState(null);
+  const [applyingForJob, setApplyingForJob] = useState(null);
+  const [viewingRoadmap, setViewingRoadmap] = useState(null);
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [theme]);
+
+  const handleSetPage = (page) => {
+    if (page === "Logout") {
+      openModal("logout");
+    } else {
+      // Close any immersive views when changing main pages
+      setViewingCourse(null);
+      setApplyingForJob(null);
+      setViewingRoadmap(null);
+      setActivePage(page);
+    }
+  };
+
+  const renderPage = () => {
+    switch (activePage) {
+      case "Home":
+        return (
+          <HomeFeed
+            setViewingCourse={setViewingCourse}
+            setApplyingForJob={setApplyingForJob}
+          />
+        );
+      case "My Network":
+        return <MyNetwork />;
+      case "Jobs":
+        return <Jobs setApplyingForJob={setApplyingForJob} />;
+      case "Roadmaps":
+        return <Roadmaps setViewingRoadmap={setViewingRoadmap} />;
+      case "Messaging":
+        return <Messaging />;
+      case "Notifications":
+        return <Notifications />;
+      case "Profile":
+        return <Profile />;
+      case "Settings":
+        return <Settings theme={theme} setTheme={setTheme} />;
+      case "Saved Items":
+        return (
+          <SavedItems
+            setViewingCourse={setViewingCourse}
+            setApplyingForJob={setApplyingForJob}
+          />
+        );
+      default:
+        return (
+          <HomeFeed
+            setViewingCourse={setViewingCourse}
+            setApplyingForJob={setApplyingForJob}
+          />
+        );
+    }
+  };
+
+  const renderMainContent = () => {
+    if (activePage === "Premium") {
+      return <Premium setActivePage={handleSetPage} />;
+    }
+    if (viewingCourse) {
+      return (
+        <CoursePage
+          course={viewingCourse}
+          onClose={() => setViewingCourse(null)}
+        />
+      );
+    }
+    if (applyingForJob) {
+      return (
+        <JobApplicationPage
+          job={applyingForJob}
+          onClose={() => setApplyingForJob(null)}
+        />
+      );
+    }
+    if (viewingRoadmap) {
+      return (
+        <RoadmapDetailPage
+          roadmap={viewingRoadmap}
+          onClose={() => setViewingRoadmap(null)}
+          setApplyingForJob={setApplyingForJob}
+        />
+      );
+    }
+    if (activePage === "Resume Builder") {
+      return <ResumeBuilder />;
+    }
+    return (
+      <main className="w-full px-6 py-6 flex-grow">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <aside className="hidden md:block md:col-span-3">
+            <LeftSidebar setActivePage={handleSetPage} />
+          </aside>
+          <div className="col-span-1 md:col-span-6">{renderPage()}</div>
+          <aside className="hidden md:block md:col-span-3">
+            <RightSidebar
+              setActivePage={handleSetPage}
+              setViewingRoadmap={setViewingRoadmap}
+            />
+          </aside>
+        </div>
+      </main>
+    );
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 antialiased min-h-screen flex flex-col">
+      <Header activePage={activePage} setActivePage={handleSetPage} />
 
-export default App
+      {renderMainContent()}
+
+      <AIAssistantFab />
+    </div>
+  );
+};
+
+export default App;
