@@ -73,3 +73,33 @@ export function logout() {
     localStorage.removeItem("mm_token");
   } catch (e) {}
 }
+
+// Performs a backend logout (if available) and clears tokens from storage.
+export async function logoutUser() {
+  const token = getToken();
+  try {
+    // Attempt to notify the backend; ignore network errors.
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      headers: token
+        ? {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          }
+        : { "Content-Type": "application/json" },
+    });
+  } catch (e) {
+    // ignore
+  }
+
+  try {
+    localStorage.removeItem("mm_token");
+  } catch (e) {}
+
+  try {
+    // also remove an alternate token key if used elsewhere
+    localStorage.removeItem("authToken");
+  } catch (e) {}
+
+  return true;
+}

@@ -1,5 +1,6 @@
 import React from "react";
 import { useModal } from "../contexts/ModalContext";
+import { useAuth } from "../contexts/AuthContext";
 
 // Import all possible modals
 import LogoutModal from "./LogoutModal";
@@ -12,10 +13,21 @@ import SendModal from "../modals/SendModal";
 const GlobalModalManager = () => {
   const { type, props, closeModal } = useModal();
 
-  const handleLogout = () => {
-    console.log("User logged out");
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await auth.logout();
+    } catch (e) {
+      // ignore
+    }
     closeModal();
-    // Here you would typically redirect or reset app state
+    // Use a hard redirect to ensure we land on the login page regardless of router setup
+    try {
+      window.location.href = "/login";
+    } catch (e) {
+      // fallback: do nothing
+    }
   };
 
   switch (type) {

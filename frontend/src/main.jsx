@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { AuthProvider } from "./components/contexts/AuthContext";
 import { ModalProvider } from "./components/providers/ModalProvider";
+import GlobalModalManager from "./components/common/GlobalModalManager";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./components/pages/LoginCompact";
 import Register from "./components/pages/Register";
@@ -29,6 +30,7 @@ createRoot(document.getElementById("root")).render(
               }
             />
           </Routes>
+          <GlobalModalManager />
         </BrowserRouter>
       </ModalProvider>
     </AuthProvider>

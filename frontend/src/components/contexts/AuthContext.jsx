@@ -5,6 +5,7 @@ import {
   login as svcLogin,
   register as svcRegister,
   logout as svcLogout,
+  logoutUser as svcLogoutUser,
 } from "../../services/auth";
 
 export const AuthContext = createContext({
@@ -63,8 +64,14 @@ export const AuthProvider = ({ children }) => {
     throw new Error("Registration failed");
   };
 
-  const logout = () => {
-    svcLogout();
+  const logout = async () => {
+    // Call backend (if available) and clear tokens
+    try {
+      await svcLogoutUser();
+    } catch (e) {
+      // fallback to local removal
+      svcLogout();
+    }
     setUser(null);
     setIsAuthenticated(false);
   };
