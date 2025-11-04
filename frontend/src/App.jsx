@@ -19,6 +19,8 @@ import CoursePage from "./components/pages/CoursePage";
 import JobApplicationPage from "./components/pages/JobApplicationPage";
 import RoadmapDetailPage from "./components/pages/RoadmapDetailPage";
 import Premium from "./components/pages/Premium";
+import Login from "./components/pages/LoginCompact";
+import Register from "./components/pages/Register";
 import { useModal } from "./components/contexts/ModalContext";
 
 const App = () => {
@@ -74,6 +76,10 @@ const App = () => {
         return <Notifications />;
       case "Profile":
         return <Profile />;
+      case "Login":
+        return <Login setActivePage={handleSetPage} />;
+      case "Register":
+        return <Register setActivePage={handleSetPage} />;
       case "Settings":
         return <Settings theme={theme} setTheme={setTheme} />;
       case "Saved Items":

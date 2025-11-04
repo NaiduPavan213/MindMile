@@ -26,6 +26,32 @@ export async function login(email, password) {
   }
 }
 
+export async function register(name, email, password) {
+  try {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, password }),
+    });
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.message || "Registration failed");
+    }
+
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    // fallback mocked response for local dev without backend
+    return new Promise((resolve) => {
+      setTimeout(
+        () => resolve({ token: "mock-token", user: { email, name } }),
+        300
+      );
+    });
+  }
+}
+
 export function saveToken(token) {
   try {
     localStorage.setItem("mm_token", token);

@@ -9,6 +9,7 @@ import {
   RoadmapIcon,
 } from "./icons/HeaderIcons";
 import { useModal } from "./contexts/ModalContext";
+import { useAuth } from "./contexts/AuthContext";
 
 const UserProfileIcon = () => (
   <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
@@ -24,6 +25,7 @@ const Header = ({ activePage, setActivePage }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
   const { openModal } = useModal();
+  const { user } = useAuth();
 
   const navLinks = [
     { name: "Home", icon: <HomeIcon /> },
@@ -134,6 +136,26 @@ const Header = ({ activePage, setActivePage }) => {
             </div>
           </nav>
 
+          {/* Show Login/Register when not authenticated */}
+          {!user && (
+            <div className="hidden md:flex items-center space-x-2 ml-4">
+              <button
+                onClick={() => setActivePage("Login")}
+                aria-label="Open login"
+                className="px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => setActivePage("Register")}
+                aria-label="Open register"
+                className="px-3 py-2 text-sm text-white bg-purple-600 rounded"
+              >
+                Register
+              </button>
+            </div>
+          )}
+
           <div className="md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -170,6 +192,29 @@ const Header = ({ activePage, setActivePage }) => {
                 <span className="ml-3 font-medium">{link.name}</span>
               </button>
             ))}
+            {/* Mobile auth actions */}
+            {!user && (
+              <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setActivePage("Login");
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 mb-2 rounded text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Login
+                </button>
+                <button
+                  onClick={() => {
+                    setActivePage("Register");
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-left px-4 py-2 rounded text-white bg-purple-600"
+                >
+                  Register
+                </button>
+              </div>
+            )}
           </nav>
         </div>
       )}
