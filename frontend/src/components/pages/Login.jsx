@@ -1,1 +1,1 @@
-export { default } from './LoginCompact';
+export { default } from "./LoginCompact";

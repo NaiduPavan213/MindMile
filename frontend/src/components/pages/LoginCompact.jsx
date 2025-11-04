@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginCompact() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const res = await login(email, password);
-      if (res && res.token) navigate('/');
-      else setError('Login failed');
+      if (res && res.token) navigate("/");
+      else setError("Login failed");
     } catch (err) {
-      setError(err.message || 'Login error');
+      setError(err.message || "Login error");
     } finally {
       setLoading(false);
     }
@@ -62,9 +62,13 @@ export default function LoginCompact() {
               disabled={loading}
               className="px-5 py-2 bg-gradient-to-br from-purple-600 to-violet-500 text-white rounded-md shadow-md"
             >
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? "Logging in..." : "Login"}
             </button>
-            <button type="button" onClick={() => navigate('/register')} className="text-sm text-gray-400">
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-sm text-gray-400"
+            >
               Create account
             </button>
           </div>
