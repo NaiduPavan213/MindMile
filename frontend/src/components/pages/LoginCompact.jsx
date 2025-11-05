@@ -7,7 +7,7 @@ export default function LoginCompact() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, setUser } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,8 +16,16 @@ export default function LoginCompact() {
     setError("");
     try {
       const res = await login(email, password);
-      if (res && res.token) navigate("/");
-      else setError("Login failed");
+      if (res && res.token) {
+        // persist under requested key and set global user
+        try {
+          localStorage.setItem("authToken", res.token);
+        } catch (e) {
+          // ignore storage errors
+        }
+        if (typeof setUser === "function") setUser(res.user || null);
+        navigate("/dashboard");
+      } else setError("Login failed");
     } catch (err) {
       setError(err.message || "Login error");
     } finally {

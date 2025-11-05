@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useContext } from "react";
 import Post from "../feed/Post";
 import { EditIcon, AnalyticsIcon } from "../icons/PageIcons";
 import { useModal } from "../contexts/ModalContext";
+import { useAuth } from "../contexts/AuthContext";
 
 const ExperienceItem = ({ title, company, duration, description, logoUrl }) => (
   <div className="flex space-x-4">
@@ -21,9 +22,13 @@ const ExperienceItem = ({ title, company, duration, description, logoUrl }) => (
 
 const Profile = () => {
   const { openModal } = useModal(); // ✅ hook from context
+  const { user, loading } = useAuth();
 
-  // ✅ Define user first
-  const user = {
+  // When loading show a placeholder
+  if (loading) return <div>Loading...</div>;
+
+  // ✅ Define user fallback
+  const userFallback = {
     name: "Priya Sharma",
     title: "B.Tech Student @ RGUKT | Aspiring AI/ML Engineer",
     avatarUrl: "https://picsum.photos/seed/user/100/100",
@@ -62,14 +67,15 @@ const Profile = () => {
     ],
   };
 
-  // ✅ Now user can be referenced safely
+  // Merge actual user over fallback for fields we have from auth
+  const mergedUser = { ...userFallback, ...(user || {}) };
   const userPosts = [
     {
       id: 101,
       type: "post",
-      author: "Priya Sharma",
-      title: user.title,
-      avatarUrl: user.avatarUrl,
+      author: mergedUser.name,
+      title: mergedUser.title,
+      avatarUrl: mergedUser.avatarUrl,
       time: "1d",
       content:
         'Excited to start the new "Advanced React Patterns" course on MindMile. Time to level up my frontend skills! #ReactJS #NeverStopLearning',
@@ -79,9 +85,9 @@ const Profile = () => {
     {
       id: 102,
       type: "post",
-      author: "Priya Sharma",
-      title: user.title,
-      avatarUrl: user.avatarUrl,
+      author: mergedUser.name,
+      title: mergedUser.title,
+      avatarUrl: mergedUser.avatarUrl,
       time: "5d",
       content:
         "Wrote a new blog post on implementing a simple neural network with TensorFlow. Check it out and let me know your thoughts! Link in comments. #MachineLearning #TensorFlow",
@@ -96,13 +102,13 @@ const Profile = () => {
       <div className="card overflow-hidden">
         <div className="relative">
           <img
-            src={user.coverUrl}
+            src={mergedUser.coverUrl}
             alt="Cover"
             className="w-full h-48 object-cover"
           />
           <img
-            src={user.avatarUrl}
-            alt={user.name}
+            src={mergedUser.avatarUrl}
+            alt={mergedUser.name}
             className="absolute bottom-0 left-6 transform translate-y-1/2 w-28 h-28 rounded-full border-4 border-white dark:border-gray-800"
           />
 
@@ -116,10 +122,16 @@ const Profile = () => {
         </div>
         <div className="pt-20 px-6 pb-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {user.name}
+            {user?.name || mergedUser.name}
+            {user && (
+              <span className="ml-3 inline-block text-sm font-medium text-green-600 dark:text-green-400">
+                (you)
+              </span>
+            )}
           </h2>
           <p className="text-md text-gray-600 dark:text-gray-300">
-            {user.title}
+            {/* prefer showing email for authenticated user, fallback to title */}
+            {user?.email || mergedUser.title}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Ongole, Andhra Pradesh, India
@@ -160,7 +172,7 @@ const Profile = () => {
           About
         </h3>
         <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-          {user.about}
+          {mergedUser.about}
         </p>
       </div>
 
@@ -170,7 +182,7 @@ const Profile = () => {
           Experience
         </h3>
         <div className="space-y-6">
-          {user.experience.map((exp, i) => (
+          {mergedUser.experience.map((exp, i) => (
             <ExperienceItem key={i} {...exp} />
           ))}
         </div>
@@ -182,7 +194,7 @@ const Profile = () => {
           Education
         </h3>
         <div className="space-y-6">
-          {user.education.map((edu, i) => (
+          {mergedUser.education.map((edu, i) => (
             <ExperienceItem key={i} {...edu} />
           ))}
         </div>
@@ -194,7 +206,7 @@ const Profile = () => {
           Skills
         </h3>
         <div className="flex flex-wrap gap-2">
-          {user.skills.map((skill) => (
+          {mergedUser.skills.map((skill) => (
             <span
               key={skill}
               className="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 text-sm font-semibold px-3 py-1 rounded-full"
