@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const auth = require("../middleware/authMiddleware");
 
@@ -22,7 +23,7 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(12);
     const hashed = await bcrypt.hash(password, salt);
 
     const user = await User.create({ name, email, password: hashed });
@@ -37,7 +38,12 @@ router.post("/register", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    if (process.env.NODE_ENV !== "production") {
+      return res
+        .status(500)
+        .json({ message: err.message || "Server error", stack: err.stack });
+    }
+    return res.status(500).json({ message: "Server error" });
   }
 });
 
@@ -69,11 +75,14 @@ router.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    if (process.env.NODE_ENV !== "production") {
+      return res
+        .status(500)
+        .json({ message: err.message || "Server error", stack: err.stack });
+    }
+    return res.status(500).json({ message: "Server error" });
   }
 });
-
-module.exports = router;
 
 // GET /api/auth/me - return current user (protected)
 router.get("/me", auth, async (req, res) => {
@@ -83,6 +92,31 @@ router.get("/me", auth, async (req, res) => {
     res.json({ user });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error" });
+    if (process.env.NODE_ENV !== "production") {
+      return res
+        .status(500)
+        .json({ message: err.message || "Server error", stack: err.stack });
+    }
+    return res.status(500).json({ message: "Server error" });
   }
 });
+
+// GET /api/auth/debug - returns DB connection state and user count (dev only)
+router.get("/debug", async (req, res) => {
+  try {
+    const state = mongoose.connection.readyState; // 0 disconnected, 1 connected, etc.
+    let userCount = null;
+    try {
+      userCount = await User.countDocuments();
+    } catch (e) {
+      // could not count (e.g. DB not connected)
+      userCount = null;
+    }
+    return res.json({ ok: true, mongoState: state, userCount });
+  } catch (err) {
+    console.error("Debug endpoint error", err);
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+module.exports = router;

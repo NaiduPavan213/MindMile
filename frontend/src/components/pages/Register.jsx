@@ -20,6 +20,8 @@ export default function RegisterCompact() {
       if (res && res.token) navigate("/");
       else setError("Registration failed");
     } catch (err) {
+      // Log full error for debugging and show message to user
+      console.error("Register error:", err);
       setError(err.message || "Registration error");
     } finally {
       setLoading(false);

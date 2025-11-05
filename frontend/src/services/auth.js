@@ -18,11 +18,8 @@ export async function login(email, password) {
     const data = await res.json();
     return data;
   } catch (err) {
-    // Fallback: return a mocked token so frontend flows still work during dev
-    // when backend isn't present.
-    return new Promise((resolve) => {
-      setTimeout(() => resolve({ token: "mock-token", user: { email } }), 300);
-    });
+    // Propagate the error so callers know login failed.
+    throw err;
   }
 }
 
@@ -35,20 +32,27 @@ export async function register(name, email, password) {
     });
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.message || "Registration failed");
+      // Try to parse JSON error body, otherwise fall back to text
+      let message = "Registration failed";
+      try {
+        const body = await res.json();
+        message = body.message || JSON.stringify(body);
+      } catch (e) {
+        try {
+          const text = await res.text();
+          message = text || message;
+        } catch (e2) {
+          // keep default
+        }
+      }
+      throw new Error(`[${res.status}] ${message}`);
     }
 
     const data = await res.json();
     return data;
   } catch (err) {
-    // fallback mocked response for local dev without backend
-    return new Promise((resolve) => {
-      setTimeout(
-        () => resolve({ token: "mock-token", user: { email, name } }),
-        300
-      );
-    });
+    // Propagate the error so callers know registration failed.
+    throw err;
   }
 }
 
