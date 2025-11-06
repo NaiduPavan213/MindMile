@@ -54,7 +54,7 @@ const LeftSidebar = ({ setActivePage }) => {
 
   const { user } = useAuth();
 
-  const displayName = user?.name || "Priya Sharma";
+  const displayName = user?.name || "Guest";
   const avatarUrl =
     user?.avatarUrl || "https://picsum.photos/seed/user/100/100";
 

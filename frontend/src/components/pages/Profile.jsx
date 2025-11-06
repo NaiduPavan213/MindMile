@@ -27,48 +27,20 @@ const Profile = () => {
   // When loading show a placeholder
   if (loading) return <div>Loading...</div>;
 
-  // ✅ Define user fallback
-  const userFallback = {
-    name: "Priya Sharma",
-    title: "B.Tech Student @ RGUKT | Aspiring AI/ML Engineer",
+  // Use authenticated user where available; otherwise use minimal placeholders
+  const defaultUser = {
+    name: "Guest",
+    title: "",
     avatarUrl: "https://picsum.photos/seed/user/100/100",
     coverUrl: "https://picsum.photos/seed/cover/800/200",
-    about:
-      "Passionate about leveraging artificial intelligence and machine learning to solve real-world problems. Currently honing my skills in Python, TensorFlow, and React. I am actively seeking internship opportunities in the AI/ML space where I can contribute and grow. Let's connect and build the future!",
-    skills: [
-      "Python",
-      "Machine Learning",
-      "Data Analysis",
-      "React.js",
-      "Node.js",
-      "TensorFlow",
-      "SQL",
-      "Git",
-    ],
-    experience: [
-      {
-        title: "Summer Intern",
-        company: "Tech Solutions Inc.",
-        duration: "May 2023 - Aug 2023",
-        description:
-          "Developed a sentiment analysis model for customer feedback using Python and TensorFlow, improving response accuracy by 15%.",
-        logoUrl: "https://picsum.photos/seed/techinc/100/100",
-      },
-    ],
-    education: [
-      {
-        title: "B.Tech, Computer Science",
-        company: "Rajiv Gandhi University of Knowledge Technologies",
-        duration: "2021 - 2025",
-        description:
-          "CGPA: 8.9/10. Relevant coursework: Data Structures, Algorithms, AI & Machine Learning, Database Management Systems.",
-        logoUrl: "https://picsum.photos/seed/rgukt/100/100",
-      },
-    ],
+    about: "",
+    skills: [],
+    experience: [],
+    education: [],
   };
 
-  // Merge actual user over fallback for fields we have from auth
-  const mergedUser = { ...userFallback, ...(user || {}) };
+  // Merge actual user over minimal defaults
+  const mergedUser = { ...defaultUser, ...(user || {}) };
   const userPosts = [
     {
       id: 101,
@@ -95,6 +67,46 @@ const Profile = () => {
       comments: 23,
     },
   ];
+
+  // If authenticated, fetch the user's posts
+  const [fetchedPosts, setFetchedPosts] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!user) return;
+      try {
+        const res = await fetch("/api/posts/me", {
+          headers: {
+            Authorization: `Bearer ${
+              localStorage.getItem("mm_token") ||
+              localStorage.getItem("authToken")
+            }`,
+          },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data && data.posts) {
+          const mapped = data.posts.map((p) => ({
+            id: p._id,
+            type: "post",
+            author: user.name,
+            title: p.title || "",
+            avatarUrl: user.avatarUrl,
+            time: new Date(p.createdAt).toLocaleString(),
+            content: p.body || "",
+            media: p.media || [],
+          }));
+          setFetchedPosts(mapped);
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -225,7 +237,7 @@ const Profile = () => {
           </h3>
         </div>
         <div className="space-y-0">
-          {userPosts.map((post) => (
+          {(fetchedPosts || userPosts).map((post) => (
             <div
               key={post.id}
               className="border-t dark:border-gray-700 first:border-t-0"

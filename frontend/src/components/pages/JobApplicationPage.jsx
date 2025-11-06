@@ -1,15 +1,27 @@
-import React, { useState } from 'react';
-import { LocationIcon } from '../icons/CardIcons';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { LocationIcon } from "../icons/CardIcons";
 
 const JobApplicationPage = ({ job, onClose }) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    name: 'Priya Sharma',
-    email: 'priya.sharma@example.com',
-    phone: '+91 98765 43210',
-    resumeVersion: 'My First Resume',
-    coverLetter: '',
+    name: "",
+    email: "",
+    phone: "",
+    resumeVersion: "My First Resume",
+    coverLetter: "",
   });
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+      }));
+    }
+  }, [user]);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleChange = (e) => {
@@ -93,31 +105,31 @@ const JobApplicationPage = ({ job, onClose }) => {
             <div className="flex items-center justify-between text-xs font-semibold text-center">
               <div
                 className={`flex-1 ${
-                  step >= 1 ? 'text-purple-600' : 'text-gray-400'
+                  step >= 1 ? "text-purple-600" : "text-gray-400"
                 }`}
               >
                 Contact Info
               </div>
               <div
                 className={`flex-1 h-0.5 ${
-                  step >= 2 ? 'bg-purple-600' : 'bg-gray-300'
+                  step >= 2 ? "bg-purple-600" : "bg-gray-300"
                 }`}
               ></div>
               <div
                 className={`flex-1 ${
-                  step >= 2 ? 'text-purple-600' : 'text-gray-400'
+                  step >= 2 ? "text-purple-600" : "text-gray-400"
                 }`}
               >
                 Resume
               </div>
               <div
                 className={`flex-1 h-0.5 ${
-                  step >= 3 ? 'bg-purple-600' : 'bg-gray-300'
+                  step >= 3 ? "bg-purple-600" : "bg-gray-300"
                 }`}
               ></div>
               <div
                 className={`flex-1 ${
-                  step >= 3 ? 'text-purple-600' : 'text-gray-400'
+                  step >= 3 ? "text-purple-600" : "text-gray-400"
                 }`}
               >
                 Review
@@ -220,8 +232,8 @@ const JobApplicationPage = ({ job, onClose }) => {
                     <strong>Resume Attached:</strong> {formData.resumeVersion}
                   </p>
                   <p>
-                    <strong>Cover Letter:</strong>{' '}
-                    {formData.coverLetter || 'Not provided'}
+                    <strong>Cover Letter:</strong>{" "}
+                    {formData.coverLetter || "Not provided"}
                   </p>
                 </div>
               </div>

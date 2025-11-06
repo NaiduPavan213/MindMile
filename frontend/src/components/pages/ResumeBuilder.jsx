@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { jsPDF } from "jspdf";
 import {
   AddIcon,
@@ -11,12 +12,11 @@ import {
 // --- INITIAL DATA ---
 const initialData = {
   personalDetails: {
-    name: "Priya Sharma",
-    email: "priya.sharma@example.com",
-    phone: "+91 98765 43210",
-    linkedin: "linkedin.com/in/priya-sharma",
-    summary:
-      "Passionate B.Tech student with a focus on AI/ML. Eager to apply my skills in a challenging internship role.",
+    name: "",
+    email: "",
+    phone: "",
+    linkedin: "",
+    summary: "",
   },
   experiences: [
     {
@@ -93,10 +93,22 @@ const ResumeBuilder = () => {
     fontSize: 10,
   });
   const [activeResume, setActiveResume] = useState(versions[0].data);
+  const { user } = useAuth();
 
   useEffect(() => {
     const activeVer = versions.find((v) => v.id === activeVersionId);
     if (activeVer) setActiveResume(activeVer.data);
+    // If authenticated user exists, seed personal details from profile
+    if (user) {
+      setActiveResume((prev) => ({
+        ...prev,
+        personalDetails: {
+          ...prev.personalDetails,
+          name: user.name || prev.personalDetails.name,
+          email: user.email || prev.personalDetails.email,
+        },
+      }));
+    }
   }, [activeVersionId, versions]);
 
   const updateActiveResume = useCallback(
@@ -348,7 +360,6 @@ const ResumeBuilder = () => {
 
         {/* Custom Sections - This is still not being used */}
         {/* You would need a loop here if you wanted to display them */}
-
       </div>
     </main>
   );

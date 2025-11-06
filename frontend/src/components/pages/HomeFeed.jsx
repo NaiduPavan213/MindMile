@@ -7,6 +7,7 @@ import QuestionPostCard from "../feed/QuestionPostCard";
 import ProjectPostCard from "../feed/ProjectPostCard";
 import ArticlePostCard from "../feed/ArticlePostCard";
 import { useModal } from "../contexts/ModalContext";
+import { useAuth } from "../contexts/AuthContext";
 
 // --- Initial Feed Items ---
 const initialFeedItems = [
@@ -69,19 +70,10 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
   const { setModalProps } = useModal();
 
   // prefer authenticated user from context when available
-  const { user: authUser } = (() => {
-    try {
-      // dynamic import to avoid circular dependency when used in other components
-      // eslint-disable-next-line global-require
-      const { useAuth } = require("../contexts/AuthContext");
-      return useAuth();
-    } catch (e) {
-      return { user: null };
-    }
-  })();
+  const { user: authUser } = useAuth();
 
   const currentUser = authUser || {
-    name: "Priya Sharma",
+    name: "Guest",
     avatarUrl: "https://picsum.photos/seed/user/100/100",
   };
 
@@ -89,6 +81,39 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
   const addContentToFeed = (newItem) => {
     setFeedItems((prevItems) => [newItem, ...prevItems]);
   };
+
+  // Fetch posts from backend (public)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/posts");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.posts && !cancelled) {
+          const mapped = data.posts.map((p) => ({
+            id: p._id,
+            type: "post",
+            author: p.authorName || p.authorId?.name || "Unknown",
+            title: p.title || "",
+            avatarUrl: `https://picsum.photos/seed/${
+              p.authorId?._id || Date.now()
+            }/100/100`,
+            time: new Date(p.createdAt).toLocaleString(),
+            content: p.body || "",
+            media: p.media || [],
+            likes: 0,
+          }));
+          setFeedItems((prev) => [...mapped, ...prev]);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Set modal props correctly
   useEffect(() => {
@@ -135,6 +160,21 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
         };
         addContentToFeed(newArticle);
       },
+      onCreated: (post) => {
+        // Map backend post to a feed item
+        const newPost = {
+          id: post._id || Date.now(),
+          type: "post",
+          author: post.authorName || post.authorId?.name || currentUser.name,
+          title: post.title || "",
+          avatarUrl: currentUser.avatarUrl,
+          time: "Just now",
+          content: post.body || "",
+          media: post.media || [],
+          likes: 0,
+        };
+        addContentToFeed(newPost);
+      },
     });
   }, [setModalProps, currentUser.name, currentUser.avatarUrl]);
 
@@ -149,61 +189,65 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
 
   return (
     <div className="space-y-6">
-      <CreatePost />
+      <div className="w-full px-2">
+        <CreatePost />
 
-      <div className="card p-2 flex items-center space-x-2">
-        <FilterButton
-          label="All"
-          isActive={activeFilter === "All"}
-          onClick={() => setActiveFilter("All")}
-        />
-        <FilterButton
-          label="Courses"
-          isActive={activeFilter === "Courses"}
-          onClick={() => setActiveFilter("Courses")}
-        />
-        <FilterButton
-          label="Jobs"
-          isActive={activeFilter === "Jobs"}
-          onClick={() => setActiveFilter("Jobs")}
-        />
-        <FilterButton
-          label="Community"
-          isActive={activeFilter === "Community"}
-          onClick={() => setActiveFilter("Community")}
-        />
+        <div className="card p-2 flex items-center space-x-2">
+          <FilterButton
+            label="All"
+            isActive={activeFilter === "All"}
+            onClick={() => setActiveFilter("All")}
+          />
+          <FilterButton
+            label="Courses"
+            isActive={activeFilter === "Courses"}
+            onClick={() => setActiveFilter("Courses")}
+          />
+          <FilterButton
+            label="Jobs"
+            isActive={activeFilter === "Jobs"}
+            onClick={() => setActiveFilter("Jobs")}
+          />
+          <FilterButton
+            label="Community"
+            isActive={activeFilter === "Community"}
+            onClick={() => setActiveFilter("Community")}
+          />
+        </div>
       </div>
 
-      {filteredFeed.map((item, index) => {
-        switch (item.type) {
-          case "post":
-            return <Post key={`post-${item.id}`} {...item} />;
-          case "course":
-            return (
-              <CourseCard
-                key={`course-${index}`}
-                {...item}
-                onStartLearning={setViewingCourse}
-              />
-            );
-          case "job":
-            return (
-              <JobCard
-                key={`job-${index}`}
-                {...item}
-                onApplyNow={setApplyingForJob}
-              />
-            );
-          case "question":
-            return <QuestionPostCard key={`question-${item.id}`} {...item} />;
-          case "project":
-            return <ProjectPostCard key={`project-${item.id}`} {...item} />;
-          case "article":
-            return <ArticlePostCard key={`article-${item.id}`} {...item} />;
-          default:
-            return null;
-        }
-      })}
+      <div className="w-full px-2">
+        {filteredFeed.map((item, index) => {
+          switch (item.type) {
+            case "post":
+              return <Post key={`post-${item.id}`} {...item} />;
+            case "course":
+              return (
+                <CourseCard
+                  key={`course-${index}`}
+                  {...item}
+                  onStartLearning={setViewingCourse}
+                />
+              );
+            case "job":
+              return (
+                <JobCard
+                  key={`job-${index}`}
+                  {...item}
+                  onApplyNow={setApplyingForJob}
+                />
+              );
+            case "question":
+              return <QuestionPostCard key={`question-${item.id}`} {...item} />;
+            case "project":
+              return <ProjectPostCard key={`project-${item.id}`} {...item} />;
+            case "article":
+              return <ArticlePostCard key={`article-${item.id}`} {...item} />;
+            default:
+              return null;
+          }
+        })}
+      </div>
     </div>
   );
 };

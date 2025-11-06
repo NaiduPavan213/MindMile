@@ -6,6 +6,7 @@ require("dotenv").config();
 
 const userRoutes = require("./routes/user");
 const authRoutes = require("./routes/auth");
+const postsRoutes = require("./routes/posts");
 const dataRoutes = require("./routes/data");
 const auth = require("./middleware/authMiddleware");
 
@@ -16,6 +17,8 @@ app.use(express.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
+// posts
+app.use("/api/posts", postsRoutes);
 // protect /api/data with auth middleware
 app.use("/api/data", auth, dataRoutes);
 
@@ -53,7 +56,10 @@ const startServer = async () => {
       console.log(`server is running on port ${PORT}`);
     });
   } catch (err) {
-    console.error("Failed to start server due to DB connection error:", err.message);
+    console.error(
+      "Failed to start server due to DB connection error:",
+      err.message
+    );
     process.exit(1);
   }
 };

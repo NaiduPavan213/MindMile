@@ -132,13 +132,13 @@ const App = () => {
       return <ResumeBuilder />;
     }
     return (
-      <main className="w-full px-6 py-6 flex-grow">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <aside className="hidden md:block md:col-span-3">
+      <main className="w-full px-4 py-6 flex-grow">
+        <div className="grid grid-cols-1 md:grid-cols-[22%_56%_22%] gap-4">
+          <aside className="hidden md:block">
             <LeftSidebar setActivePage={handleSetPage} />
           </aside>
-          <div className="col-span-1 md:col-span-6">{renderPage()}</div>
-          <aside className="hidden md:block md:col-span-3">
+          <div className="col-span-1">{renderPage()}</div>
+          <aside className="hidden md:block">
             <RightSidebar
               setActivePage={handleSetPage}
               setViewingRoadmap={setViewingRoadmap}

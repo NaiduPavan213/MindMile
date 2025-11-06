@@ -9,6 +9,7 @@ import ShareProjectModal from "../modals/ShareProjectModal";
 import WriteArticleModal from "../modals/WriteArticleModal";
 import ShareModal from "../modals/ShareModal";
 import SendModal from "../modals/SendModal";
+import CreatePostModal from "../modals/CreatePostModal";
 
 const GlobalModalManager = () => {
   const { type, props, closeModal } = useModal();
@@ -59,6 +60,12 @@ const GlobalModalManager = () => {
           onClose={closeModal}
           onWriteArticle={props.onWriteArticle}
         />
+      );
+
+    case "createPost":
+      // props.onCreated is optional callback to refresh feed
+      return (
+        <CreatePostModal onClose={closeModal} onCreated={props.onCreated} />
       );
 
     case "share":

@@ -24,7 +24,8 @@ export default function LoginCompact() {
           // ignore storage errors
         }
         if (typeof setUser === "function") setUser(res.user || null);
-        navigate("/dashboard");
+        // redirect into the app root — App handles internal pages via its own state
+        navigate("/");
       } else setError("Login failed");
     } catch (err) {
       setError(err.message || "Login error");
