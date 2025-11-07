@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { useModal } from "../contexts/ModalContext";
 import { useAuth } from "../contexts/AuthContext";
+import { getToken } from "../../services/auth";
 
 const mockComments = [
   {
@@ -30,13 +31,26 @@ const ActionButton = ({ icon, label, onClick, isActive }) => (
 );
 
 const Post = (props) => {
-  const { author, title, avatarUrl, time, content, likes } = props;
+  const {
+    id,
+    author,
+    authorId,
+    title,
+    avatarUrl,
+    time,
+    content,
+    likes,
+    onDelete,
+  } = props;
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(likes);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const commentInputRef = useRef(null);
   const { openModal } = useModal();
   const { user: authUser } = useAuth();
+  const [isDeleting, setIsDeleting] = useState(false);
+  // normalize current user id (support both `._id` and `.id` shapes)
+  const currentUserId = authUser && (authUser._id || authUser.id || null);
   // UI state for compactness
   const [isTextExpanded, setIsTextExpanded] = useState(false);
   const TEXT_TRUNCATE_LENGTH = 300; // characters before truncation
@@ -98,7 +112,20 @@ const Post = (props) => {
         </div>
         <div className="relative">
           <button
-            onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+            onClick={() => {
+              // log owner check info when options are opened to help debugging
+              const willOpen = !isOptionsOpen;
+              if (willOpen) {
+                // eslint-disable-next-line no-console
+                console.log(
+                  "Post options open - currentUserId:",
+                  currentUserId,
+                  "authorId:",
+                  authorId
+                );
+              }
+              setIsOptionsOpen(!isOptionsOpen);
+            }}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -119,6 +146,61 @@ const Post = (props) => {
               >
                 Report Post
               </button>
+              {/* Show Delete only for the author */}
+              {currentUserId &&
+                authorId &&
+                String(currentUserId) === String(authorId) && (
+                  <button
+                    onClick={() => {
+                      // open app modal for confirmation instead of native confirm
+                      openModal("confirm", {
+                        title: "Delete Post",
+                        message:
+                          "Are you sure you want to delete this post? This action cannot be undone.",
+                        confirmLabel: "Delete",
+                        cancelLabel: "Cancel",
+                        danger: true,
+                        // indicate processing state to modal (optional)
+                        isProcessing: isDeleting,
+                        onConfirm: async () => {
+                          try {
+                            setIsDeleting(true);
+                            const token = getToken();
+                            const res = await fetch(`/api/posts/${id}`, {
+                              method: "DELETE",
+                              headers: token
+                                ? { Authorization: `Bearer ${token}` }
+                                : {},
+                            });
+                            if (!res.ok) {
+                              const body = await res.json().catch(() => ({}));
+                              throw new Error(
+                                body.message ||
+                                  `Failed to delete (${res.status})`
+                              );
+                            }
+                            // notify parent to remove from feed
+                            onDelete?.(id);
+                          } catch (e) {
+                            console.error(e);
+                            // show a basic inline alert for now; can be replaced with a toast
+                            try {
+                              // prefer modal-managed UI, but fallback to alert
+                              alert(e.message || "Failed to delete post");
+                            } catch (err) {}
+                          } finally {
+                            setIsDeleting(false);
+                            setIsOptionsOpen(false);
+                          }
+                        },
+                      });
+                    }}
+                    disabled={isDeleting}
+                    className="w-full text-left block px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {isDeleting ? "Deleting..." : "Delete Post"}
+                  </button>
+                )}
             </div>
           )}
         </div>

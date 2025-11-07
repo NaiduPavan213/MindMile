@@ -100,13 +100,11 @@ if (upload) {
   });
 } else {
   router.post("/", auth, async (req, res) => {
-    return res
-      .status(501)
-      .json({
-        ok: false,
-        message:
-          "File upload is disabled because the server is missing the multer package. Run `npm install multer` in backend and restart the server.",
-      });
+    return res.status(501).json({
+      ok: false,
+      message:
+        "File upload is disabled because the server is missing the multer package. Run `npm install multer` in backend and restart the server.",
+    });
   });
 }
 
@@ -167,6 +165,33 @@ router.get("/author/:id", async (req, res) => {
   } catch (err) {
     console.error("Fetch author posts error", err);
     return res.status(500).json({ ok: false, message: err.message });
+  }
+});
+
+// DELETE /api/posts/:id - delete a post (author only)
+router.delete("/:id", auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post)
+      return res.status(404).json({ ok: false, message: "Post not found" });
+
+    // req.user may be an id string or an object; normalize to string
+    const requesterId = String(req.user);
+    const authorId = String(post.authorId);
+
+    if (authorId !== requesterId) {
+      return res
+        .status(403)
+        .json({ ok: false, message: "You can only delete your own posts" });
+    }
+
+    await Post.findByIdAndDelete(req.params.id);
+    return res.json({ ok: true, message: "Post deleted successfully" });
+  } catch (err) {
+    console.error("Delete post error", err);
+    return res
+      .status(500)
+      .json({ ok: false, message: err.message || "Server error" });
   }
 });
 

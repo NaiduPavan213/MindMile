@@ -95,6 +95,8 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
             id: p._id,
             type: "post",
             author: p.authorName || p.authorId?.name || "Unknown",
+            // keep the raw author id to allow client-side ownership checks
+            authorId: p.authorId?._id || p.authorId || null,
             title: p.title || "",
             avatarUrl: `https://picsum.photos/seed/${
               p.authorId?._id || Date.now()
@@ -166,6 +168,8 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
           id: post._id || Date.now(),
           type: "post",
           author: post.authorName || post.authorId?.name || currentUser.name,
+          // preserve authorId returned from backend when possible
+          authorId: post.authorId?._id || post.authorId || null,
           title: post.title || "",
           avatarUrl: currentUser.avatarUrl,
           time: "Just now",
@@ -220,7 +224,15 @@ const HomeFeed = ({ setViewingCourse, setApplyingForJob }) => {
         {filteredFeed.map((item, index) => {
           switch (item.type) {
             case "post":
-              return <Post key={`post-${item.id}`} {...item} />;
+              return (
+                <Post
+                  key={`post-${item.id}`}
+                  {...item}
+                  onDelete={(id) =>
+                    setFeedItems((prev) => prev.filter((it) => it.id !== id))
+                  }
+                />
+              );
             case "course":
               return (
                 <CourseCard

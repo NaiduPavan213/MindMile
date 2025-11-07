@@ -3,7 +3,7 @@ import { useModal } from "../contexts/ModalContext";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function CreatePostModal({ onClose, onCreated }) {
-  const { closeModal } = useModal();
+  const { closeModal, openModal } = useModal();
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -52,7 +52,7 @@ export default function CreatePostModal({ onClose, onCreated }) {
       files.forEach((f) => form.append("files", f.file));
 
       // use XMLHttpRequest so we can track upload progress
-      await new Promise((resolve, reject) => {
+      const result = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/posts");
         const token =
@@ -82,18 +82,41 @@ export default function CreatePostModal({ onClose, onCreated }) {
         xhr.send(form);
       });
 
-      // success
+      // success - result may be the parsed response or raw text
       setTitle("");
       setBody("");
       setTags("");
       setFiles([]);
       setUploadProgress(100);
-      if (onCreated) onCreated();
+      // If backend returned the created post, pass it to the parent so the feed can show it immediately
+      try {
+        const createdPost = result && result.post ? result.post : result;
+        if (onCreated) onCreated(createdPost);
+      } catch (e) {
+        // ignore mapping errors
+        if (onCreated) onCreated();
+      }
       closeModal();
-      alert("Post created successfully");
+      // show in-app confirmation modal instead of native alert
+      openModal("confirm", {
+        title: "Post created",
+        message: "Post created successfully",
+        confirmLabel: "OK",
+        cancelLabel: null,
+        danger: false,
+        onConfirm: () => Promise.resolve(),
+      });
     } catch (err) {
       console.error("Create post error", err);
-      alert(err.message || "Post creation failed");
+      // show error inline using the confirm modal as a simple notification
+      openModal("confirm", {
+        title: "Post creation failed",
+        message: err.message || "Post creation failed",
+        confirmLabel: "OK",
+        cancelLabel: null,
+        danger: true,
+        onConfirm: () => Promise.resolve(),
+      });
     } finally {
       setLoading(false);
       setUploadProgress(0);

@@ -46,6 +46,8 @@ const Profile = () => {
       id: 101,
       type: "post",
       author: mergedUser.name,
+      // include authorId so Post can decide owner-only actions
+      authorId: user?._id || user?.id || null,
       title: mergedUser.title,
       avatarUrl: mergedUser.avatarUrl,
       time: "1d",
@@ -58,6 +60,7 @@ const Profile = () => {
       id: 102,
       type: "post",
       author: mergedUser.name,
+      authorId: user?._id || user?.id || null,
       title: mergedUser.title,
       avatarUrl: mergedUser.avatarUrl,
       time: "5d",
@@ -70,6 +73,10 @@ const Profile = () => {
 
   // If authenticated, fetch the user's posts
   const [fetchedPosts, setFetchedPosts] = React.useState(null);
+  // maintain localPosts so deletes update the UI regardless of whether we're showing
+  // mocked userPosts or fetched posts from the server
+  const [localPosts, setLocalPosts] = React.useState(userPosts);
+
   React.useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -89,6 +96,8 @@ const Profile = () => {
           const mapped = data.posts.map((p) => ({
             id: p._id,
             type: "post",
+            // include authorId so Post knows the owner
+            authorId: p.authorId?._id || p.authorId || user?._id || user?.id,
             author: user.name,
             title: p.title || "",
             avatarUrl: user.avatarUrl,
@@ -97,6 +106,7 @@ const Profile = () => {
             media: p.media || [],
           }));
           setFetchedPosts(mapped);
+          setLocalPosts(mapped);
         }
       } catch (e) {
         // ignore
@@ -107,6 +117,12 @@ const Profile = () => {
       cancelled = true;
     };
   }, [user]);
+
+  // keep localPosts in sync with fetchedPosts or fall back to static userPosts
+  React.useEffect(() => {
+    if (fetchedPosts) setLocalPosts(fetchedPosts);
+    else setLocalPosts(userPosts);
+  }, [fetchedPosts]);
 
   return (
     <div className="space-y-6">
@@ -237,12 +253,17 @@ const Profile = () => {
           </h3>
         </div>
         <div className="space-y-0">
-          {(fetchedPosts || userPosts).map((post) => (
+          {localPosts.map((post) => (
             <div
               key={post.id}
               className="border-t dark:border-gray-700 first:border-t-0"
             >
-              <Post {...post} />
+              <Post
+                {...post}
+                onDelete={(id) =>
+                  setLocalPosts((prev) => prev.filter((p) => p.id !== id))
+                }
+              />
             </div>
           ))}
         </div>

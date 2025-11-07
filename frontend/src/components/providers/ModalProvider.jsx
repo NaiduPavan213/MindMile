@@ -7,12 +7,19 @@ export const ModalProvider = ({ children }) => {
     props: {},
   });
 
-  const openModal = useCallback((type, props = {}) => {
-    setModalState({ type, props });
+  const openModal = useCallback((type, props) => {
+    // Merge provided props with any existing modal props so global handlers
+    // (set via setModalProps) are preserved when opening modals without props.
+    setModalState((prevState) => ({
+      type,
+      props: { ...(prevState.props || {}), ...(props || {}) },
+    }));
   }, []);
 
   const closeModal = useCallback(() => {
-    setModalState({ type: null, props: {} });
+    // Close the active modal but preserve modal props (handlers) so global
+    // callbacks set via setModalProps are not lost when a modal closes.
+    setModalState((prevState) => ({ ...prevState, type: null }));
   }, []);
 
   // Allows components to update modal props dynamically

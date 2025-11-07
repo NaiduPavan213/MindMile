@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 // Import all possible modals
 import LogoutModal from "./LogoutModal";
+import ConfirmModal from "./ConfirmModal";
 import AskQuestionModal from "../modals/AskQuestionModal";
 import ShareProjectModal from "../modals/ShareProjectModal";
 import WriteArticleModal from "../modals/WriteArticleModal";
@@ -34,6 +35,32 @@ const GlobalModalManager = () => {
   switch (type) {
     case "logout":
       return <LogoutModal onClose={closeModal} onConfirm={handleLogout} />;
+
+    case "confirm":
+      // generic confirmation modal
+      // props: { title, message, confirmLabel, cancelLabel, danger, onConfirm }
+      if (!props || !props.onConfirm) return null;
+      return (
+        <ConfirmModal
+          onClose={closeModal}
+          onConfirm={async () => {
+            try {
+              await props.onConfirm();
+            } catch (e) {
+              // swallow here; the caller can surface its own error UI
+              // but we don't want the modal stuck open on thrown errors
+              // (caller may update props.isProcessing to false)
+            }
+            closeModal();
+          }}
+          title={props.title || "Please confirm"}
+          message={props.message}
+          confirmLabel={props.confirmLabel}
+          cancelLabel={props.cancelLabel}
+          danger={props.danger}
+          isProcessing={props.isProcessing}
+        />
+      );
 
     case "askQuestion":
       if (!props.onPostQuestion) return null;
